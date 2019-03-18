@@ -5,13 +5,9 @@ our $VERSION = "1.01";
 $VERSION = eval $VERSION;
 
 sub register {
-  my ($self, $app) = @_;
+  my ($self, $app, $conf) = @_;
 
-  #
-  # Attributes
-  #
-
-  $app->attr(cors_origin => sub { [ "*" ] });
+  $conf->{cors_origin} ||= ["*"]; # allow all by default
 
   #
   # Helpers
@@ -41,20 +37,20 @@ sub register {
   $app->helper(cors_check_origin => sub {
     my ($c) = @_;
 
-    my $cors_origin = $app->cors_origin;
-    return unless @$cors_origin; # fail
+    my @cors_origin = @{$conf->{cors_origin}};
+    return unless @cors_origin; # fail
 
     my $origin = $c->req->headers->origin;
-    return unless $origin; # fail
+    return unless $origin;  # fail
 
-    my $wildcard = grep { not ref $_ and $_ eq "*" } @$cors_origin;
+    my $wildcard = grep { not ref $_ and $_ eq "*" } @cors_origin;
     return $origin if $wildcard; # success
 
     my $exists = grep {
       if    (not ref $_)          { $origin eq $_ }
       elsif (ref $_ eq 'Regexp')  { $origin =~ $_ }
       else  { die "API config cors_origin has bad type\n" }
-    } @$cors_origin;
+    } @cors_origin;
 
     return $origin if $exists; # success
 
@@ -107,7 +103,7 @@ sub register {
 
     my $expose = join ", ", keys %headers;
 
-    $h->header($_ => $headers{ $_ }) for keys %headers;
+    $h->header($_ => $headers{$_}) for keys %headers;
     $h->append("Access-Control-Expose-Headers" => $expose);
   });
 
