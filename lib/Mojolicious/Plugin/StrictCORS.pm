@@ -116,7 +116,7 @@ sub register {
 
     $c->stash(cors_strict => 0);
     $c->stash(cors_origin => undef);
-    $c->stash(cors_person => 0);
+    $c->stash(cors_authorize => 0);
   });
 
   $app->hook(after_dispatch => sub {
@@ -132,9 +132,8 @@ sub register {
     $h->append("Vary" => "Origin");
     $h->header("Access-Control-Allow-Origin" => $cors_origin);
 
-    return unless $c->stash('cors_person');
-
-    $h->header("Access-Control-Allow-Credentials" => "true");
+    $h->header("Access-Control-Allow-Credentials" => "true")
+      if $c->stash('cors_authorize');
   });
 
   #
