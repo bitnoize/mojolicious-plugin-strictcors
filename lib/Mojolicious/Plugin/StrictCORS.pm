@@ -1,13 +1,22 @@
 package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base "Mojolicious::Plugin";
 
-our $VERSION = "1.01";
+our $VERSION = "1.02_002";
 $VERSION = eval $VERSION;
+
+use constant DEFAULT_MAX_AGE => 3600;
 
 sub register {
   my ($self, $app, $conf) = @_;
 
-  $conf->{cors_origin} ||= ["*"]; # allow all by default
+  $conf->{max_age}      ||= DEFAULT_MAX_AGE;
+  $conf->{cors_origin}  ||= ["*"];
+
+  $app->defaults(
+    cors_strict     => 0,
+    cors_origin     => undef,
+    cors_authorize  => 0
+  );
 
   #
   # Helpers
@@ -18,6 +27,12 @@ sub register {
 
     $c->stash(cors_strict => 0) unless $done;
     $c->render(text => "", status => 204);
+  });
+
+  $app->helper('reply.cors_forbidden' => sub {
+    my ($c) = @_;
+
+    $c->render(text => "", status => 403);
   });
 
   $app->helper(cors_necessary => sub {
@@ -38,10 +53,10 @@ sub register {
     my ($c) = @_;
 
     my @cors_origin = @{$conf->{cors_origin}};
-    return unless @cors_origin; # fail
+    return '' unless @cors_origin; # fail
 
     my $origin = $c->req->headers->origin;
-    return unless $origin;  # fail
+    return '' unless $origin; # fail
 
     my $wildcard = grep { not ref $_ and $_ eq "*" } @cors_origin;
     return $origin if $wildcard; # success
@@ -54,26 +69,26 @@ sub register {
 
     return $origin if $exists; # success
 
-    return; # fail
+    return ''; # fail
   } );
 
   $app->helper(cors_check_methods => sub {
     my ($c) = @_;
 
     my $cors_methods = $c->stash('cors_methods');
-    return unless @$cors_methods; # fail
+    return '' unless @$cors_methods; # fail
 
     my $h = $c->req->headers;
 
     my $method = $h->header("Access-Control-Request-Method");
-    return unless $method; # fail
+    return '' unless $method; # fail
 
     my $allow = join ", ", @$cors_methods;
 
     my $exists = grep { $_ eq $method } @$cors_methods;
     return $allow if $exists; # success
 
-    return; # fail
+    return ''; # fail
   } );
 
   $app->helper(cors_check_headers => sub {
@@ -93,7 +108,7 @@ sub register {
     my $excess = grep { not exists $cors_headers{ lc $_ } } @headers;
     return $allow unless $excess; # success
 
-    return; # fail
+    return ''; # fail
   });
 
   $app->helper(custom_headers => sub {
@@ -110,14 +125,6 @@ sub register {
   #
   # Hooks
   #
-
-  $app->hook(before_dispatch => sub {
-    my ($c) = @_;
-
-    $c->stash(cors_strict => 0);
-    $c->stash(cors_origin => undef);
-    $c->stash(cors_authorize => 0);
-  });
 
   $app->hook(after_dispatch => sub {
     my ($c) = @_;
@@ -150,7 +157,7 @@ sub register {
       return 1 unless $c->cors_necessary;
 
       my $origin = $c->cors_check_origin;
-      return $c->reply->forbidden unless $origin;
+      $c->reply->cors_forbidden and return 0 unless $origin;
 
       $c->stash(cors_strict => 1);
       $c->stash(cors_origin => $origin);
@@ -177,7 +184,7 @@ sub register {
 
       $h->header("Access-Control-Allow-Methods" => $cors_methods);
       $h->header("Access-Control-Allow-Headers" => $cors_headers);
-      $h->header("Access-Control-Max-Age" => 3600);
+      $h->header("Access-Control-Max-Age" => $conf->{max_age});
 
       $c->reply->cors_empty(1);
     });
