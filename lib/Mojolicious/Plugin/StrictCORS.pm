@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base "Mojolicious::Plugin";
 
-our $VERSION = "1.02_002";
+our $VERSION = "1.02_003";
 $VERSION = eval $VERSION;
 
 use constant DEFAULT_MAX_AGE => 3600;
@@ -9,8 +9,8 @@ use constant DEFAULT_MAX_AGE => 3600;
 sub register {
   my ($self, $app, $conf) = @_;
 
-  $conf->{max_age}      ||= DEFAULT_MAX_AGE;
-  $conf->{cors_origin}  ||= ["*"];
+  $conf->{max_age}  ||= DEFAULT_MAX_AGE;
+  $conf->{origin}   ||= ["*"];
 
   $app->defaults(
     cors_strict     => 0,
@@ -52,7 +52,7 @@ sub register {
   $app->helper(cors_check_origin => sub {
     my ($c) = @_;
 
-    my @cors_origin = @{$conf->{cors_origin}};
+    my @cors_origin = @{$conf->{origin}};
     return '' unless @cors_origin; # fail
 
     my $origin = $c->req->headers->origin;

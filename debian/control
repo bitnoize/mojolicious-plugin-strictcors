@@ -5,7 +5,7 @@ Maintainer: Dmitry Krutikov <mitya@whteam.net>
 Build-Depends: debhelper (>= 10), perl (>= 5.24),
   libmojolicious-perl (>= 8.12)
 Standards-Version: 4.3.0
-Homepage: https://bitbucket.org/whoerdev/mojolicious-plugin-strictcors
+Homepage: https://github.com/bitnoize/mojolicious-plugin-strictcors
 
 Package: libmojolicious-plugin-strictcors-perl
 Architecture: all
