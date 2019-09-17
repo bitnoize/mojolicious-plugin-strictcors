@@ -1,8 +1,10 @@
 package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base "Mojolicious::Plugin";
 
-our $VERSION = "1.02_003";
+## no critic
+our $VERSION = "1.03_001";
 $VERSION = eval $VERSION;
+## use critic
 
 use constant DEFAULT_MAX_AGE => 3600;
 
@@ -120,6 +122,8 @@ sub register {
 
     $h->header($_ => $headers{$_}) for keys %headers;
     $h->append("Access-Control-Expose-Headers" => $expose);
+
+    return $c;
   });
 
   #

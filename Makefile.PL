@@ -12,7 +12,7 @@ WriteMakefile(
   LICENSE      => 'artistic_2',
   AUTHOR        => "Dmitry Krutikov <mitya\@whteam.net>",
   PREREQ_PM     => {
-    'Mojolicious' => '8.12'
+    'Mojolicious' => '8.22'
   },
   test => { TESTS => 't/*.t' }
 );
