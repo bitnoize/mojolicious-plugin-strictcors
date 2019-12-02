@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base 'Mojolicious::Plugin';
 
 ## no critic
-our $VERSION = '1.05_003';
+our $VERSION = '1.05_005';
 $VERSION = eval $VERSION;
 ## use critic
 
@@ -91,7 +91,11 @@ sub register {
   $app->hook(around_action => sub {
     my ($next, $c, $action, $last) = @_;
 
+    # Only endpoints intrested
     return $next->() unless $last;
+
+    # Do not process preflight requests
+    return $next->() if $c->req->method eq 'OPTIONS';
 
     my $opts = _route_opts($c->match->endpoint);
 
@@ -265,7 +269,7 @@ Mojolicious::Plugin::StrictCORS - Strict control over CORS
     $r->cors(...);
 
     # create under to protect all nested routes
-    $r = $app->routes->under_cors("/api");
+    $r = $app->routes->under_cors("/v1");
 
 =head1 DESCRIPTION
 
@@ -384,7 +388,7 @@ them automatically by searching for route defined for same path and HTTP
 method given in CORS request. Example:
 
     $r->cors('/rpc');
-    $r->get('/rpc', { cors_origin => ['http://example.com'] });
+    $r->get('/rpc', { cors_origin => ['http://test.com'] });
     $r->put('/rpc', { cors_origin => [qr/\.local\z/ms] });
 
 But in some cases target route can't be detected, for example if you've
@@ -400,7 +404,7 @@ preflight route. Example:
 
     $r->cors('/rpc')->to(
         cors_methods      => [qw/GET POST/],
-        cors_origin       => ['http://localhost http://example.com'],
+        cors_origin       => ['http://localhost http://test.com'],
         cors_credentials  => 1,
     );
     $r->any([qw(GET POST)] => '/rpc')->over(
