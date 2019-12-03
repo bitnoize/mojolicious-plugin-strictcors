@@ -70,7 +70,7 @@ sub register {
     my $allow = join ", ", @allow;
 
     my $headers = $c->req->headers->header('Access-Control-Request-Headers');
-    my @headers = map { lc } grep { $_ } split /,\s*/ms, $headers || "";
+    my @headers = map { lc } grep { $_ } split /,\s*/ms, $headers || '';
 
     return $allow unless @headers;
 
@@ -242,7 +242,7 @@ Mojolicious::Plugin::StrictCORS - Strict control over CORS
 
 =head1 VERSION
 
-2.08
+1.05
 
 =head1 SYNOPSIS
 
@@ -280,12 +280,12 @@ Implements this spec: L<http://www.w3.org/TR/2014/REC-cors-20140116/>.
 
 =head2 SECURITY
 
-Don't use the lazy C<< cors_origin => ["*"] >> for resources which should be
+Don't use the lazy C<< cors_origin => ['*'] >> for resources which should be
 available only for intranet or which behave differently when accessed from
 intranet - otherwise malicious website opened in browser running on
 workstation in intranet will get access to these resources.
 
-Don't use the lazy C<< cors_origin => ["*"] >> for resources which should be
+Don't use the lazy C<< cors_origin => ['*'] >> for resources which should be
 available only from some known websites - otherwise other malicious website
 will be able to attack your site by injecting JavaScript into the victim's
 browser.
@@ -307,28 +307,28 @@ predefined defaults for their nested routes.
 
 =over
 
-=item C<< cors_origin => ["*"] >>
+=item C<< cors_origin => ['*'] >>
 
-=item C<< cors_origin => ["http://test.com"] >>
+=item C<< cors_origin => ["http://example.com"] >>
 
-=item C<< cors_origin => ["https://test.com", "http://test.com:8080"] >>
+=item C<< cors_origin => ["https://example.com", "http://example.com:8080"] >>
 
 =item C<< cors_origin => [qr/\.local\z/ms] >>
 
-=item C<< cors_origin => [] >> (default)
+=item C<< cors_origin => undef >> (default)
 
 This option is required to enable CORS support for the route.
 
 Only matched origins will be allowed to process returned response
 (C<['*']> will match any origin).
 
-When set to empty array no origins will match, so it effectively disable
+When set to undef no origins will match, so it effectively disable
 CORS support (may be useful if you've set this option value on parent
 route).
 
 =item C<< cors_credentials => 1 >>
 
-=item C<< cors_credentials => 0 >> (default)
+=item C<< cors_credentials => undef >> (default)
 
 While handling preflight request true/false value will tell browser to
 send or not send credentials (cookies, http auth, SSL certificate) with
@@ -337,11 +337,11 @@ actual request.
 While handling simple/actual request if set to false and browser has sent
 credentials will disallow to process returned response.
 
-=item C<< cors_expose => ["X-Some"] >>
+=item C<< cors_expose => ['X-Some'] >>
 
-=item C<< cors_expose => ["X-Some", "X-Other", "Server"] >>
+=item C<< cors_expose => [qw/X-Some X-Other Server/] >>
 
-=item C<< cors_expose => [] >> (default)
+=item C<< cors_expose => undef >> (default)
 
 Allow access to these headers while processing returned response.
 
@@ -354,11 +354,11 @@ These headers doesn't need to be included in this option:
   Last-Modified
   Pragma
 
-=item C<< cors_headers => 'X-Requested-With' >>
+=item C<< cors_headers => ['X-Requested-With'] >>
 
-=item C<< cors_headers => 'X-Requested-With, Content-Type, X-Some' >>
+=item C<< cors_headers => [qw/X-Requested-With Content-Type X-Some/] >>
 
-=item C<< cors_headers => [] >> (default)
+=item C<< cors_headers => undef >> (default)
 
 Define headers which browser is allowed to send. Work only for non-simple
 CORS because it require preflight.
@@ -387,9 +387,9 @@ options for requested method/path. In most cases it will be able to detect
 them automatically by searching for route defined for same path and HTTP
 method given in CORS request. Example:
 
-    $r->cors('/rpc');
-    $r->get('/rpc', { cors_origin => ['http://test.com'] });
-    $r->put('/rpc', { cors_origin => [qr/\.local\z/ms] });
+    $r->cors("/rpc");
+    $r->get("/rpc", { cors_origin => ["http://example.com"] });
+    $r->put("/rpc", { cors_origin => [qr/\.local\z/ms] });
 
 But in some cases target route can't be detected, for example if you've
 defined several routes for same path using different conditions which
@@ -402,32 +402,32 @@ routes will be used to handle actual request, in case they use different
 CORS options you should use combined in less restrictive way options for
 preflight route. Example:
 
-    $r->cors('/rpc')->to(
+    $r->cors("/rpc")->to(
         cors_methods      => [qw/GET POST/],
-        cors_origin       => ['http://localhost http://test.com'],
+        cors_origin       => ["http://localhost", "http://example.com"],
         cors_credentials  => 1,
     );
-    $r->any([qw(GET POST)] => '/rpc')->over(
+    $r->any([qw(GET POST)] => "/rpc")->over(
       headers => {
         'Content-Type' => 'application/json-rpc'
       }
     )->to(
       controller  => 'jsonrpc',
       action      => 'handler',
-      cors_origin => ['http://localhost']
+      cors_origin => ["http://localhost"]
     );
-    $r->post('/rpc')->over(
+    $r->post("/rpc")->over(
       headers => {
         'Content-Type' => 'application/soap+xml'
       }
-    )->to('soaprpc#handler',
-      controller  => "soaprpc",
-      action      => "handler",
-      cors_origin => 'http://test.com',
+    )->to(
+      controller  => 'soaprpc',
+      action      => 'handler',
+      cors_origin => "http://example.com",
       cors_credentials  => 1
     );
 
-This route use "headers" condition, so you can add your own handler for
+This route use 'headers' condition, so you can add your own handler for
 OPTIONS method on same path after this one, to handle non-CORS OPTIONS
 requests on same path.
 
@@ -454,7 +454,7 @@ L<Mojolicious::Plugin::StrictCORS> supports the following options.
   $app->plugin('StrictCORS', { max_age => -1 });
 
 Value for C<Access-Control-Max-Age:> sent by preflight OPTIONS handler.
-If set to C<-1> cache will disabled.
+If set to C<-1> cache will be disabled.
 
 Default is 3600 (1 hour).
 
