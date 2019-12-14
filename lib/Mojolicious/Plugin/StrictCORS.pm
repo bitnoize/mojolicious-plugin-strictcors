@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base 'Mojolicious::Plugin';
 
 ## no critic
-our $VERSION = '1.05_005';
+our $VERSION = '1.05_007';
 $VERSION = eval $VERSION;
 ## use critic
 
@@ -11,7 +11,8 @@ use constant DEFAULT_MAX_AGE => 3600;
 sub register {
   my ($self, $app, $conf) = @_;
 
-  $conf->{max_age} //= DEFAULT_MAX_AGE;
+  $conf->{max_age}  //= DEFAULT_MAX_AGE;
+  $conf->{expose}   //= [];
 
   #
   # Helpers
@@ -113,7 +114,7 @@ sub register {
     $h->header('Access-Control-Allow-Credentials' => 'true')
       if $opts->{credentials} //= 0;
 
-    my @opts_expose = @{$opts->{expose} //= []};
+    my @opts_expose = (@{$conf->{expose}}, @{$opts->{expose} //= []});
     if (@opts_expose) {
       my $opts_expose = join ", ", @opts_expose;
       $h->header('Access-Control-Expose-Headers' => $opts_expose);
@@ -238,7 +239,7 @@ __END__
 
 =head1 NAME
 
-Mojolicious::Plugin::StrictCORS - Strict control over CORS
+Mojolicious::Plugin::StrictCORS - Strict and secure control over CORS
 
 =head1 VERSION
 
@@ -252,7 +253,10 @@ Mojolicious::Plugin::StrictCORS - Strict control over CORS
 
     # load and configure
     $app->plugin('StrictCORS');
-    $app->plugin('StrictCORS', { max_age => undef });
+    $app->plugin('StrictCORS', {
+      max_age => -1,
+      expose  => ['X-Message']
+    });
 
     # set app-wide CORS defaults
     $app->routes->to(cors_credentials => 1);
@@ -277,6 +281,10 @@ L<Mojolicious::Plugin::StrictCORS> is a plugin that allow you to configure
 Cross Origin Resource Sharing for routes in L<Mojolicious> app.
 
 Implements this spec: L<http://www.w3.org/TR/2014/REC-cors-20140116/>.
+
+This module is based on Powerman's CORS implementation:
+https://github.com/powerman/perl-Mojolicious-Plugin-SecureCORS
+But this module no longer updated, so this one wos created.
 
 =head2 SECURITY
 
@@ -457,6 +465,15 @@ Value for C<Access-Control-Max-Age:> sent by preflight OPTIONS handler.
 If set to C<-1> cache will be disabled.
 
 Default is 3600 (1 hour).
+
+=head2 expose
+
+  $app->plugin('StrictCORS', { expose => ['X-Message']});
+
+Default value for C<Access-Control-Expose-Headers> for all requests, that
+configured to use CORS.
+
+Defailt is ampty array.
 
 =head1 METHODS
 
