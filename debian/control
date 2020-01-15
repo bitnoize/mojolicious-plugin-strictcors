@@ -3,13 +3,13 @@ Section: perl
 Priority: optional
 Maintainer: Dmitry Krutikov <mitya@whteam.net>
 Build-Depends: debhelper (>= 11), perl (>= 5.24),
-  libmojolicious-perl (>= 8.22)
+  libmojolicious-perl (>= 8.12)
 Standards-Version: 4.3.0
 Homepage: https://github.com/bitnoize/mojolicious-plugin-strictcors
 
 Package: libmojolicious-plugin-strictcors-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
-  libmojolicious-perl (>= 8.22)
+  libmojolicious-perl (>= 8.12)
 Description: Strict CORS routes in your Mojolicious app
 
