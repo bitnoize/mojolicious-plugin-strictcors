@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base 'Mojolicious::Plugin';
 
 ## no critic
-our $VERSION = '1.05_007';
+our $VERSION = '1.05_008';
 $VERSION = eval $VERSION;
 ## use critic
 
@@ -46,7 +46,7 @@ sub register {
     my $allow = join ", ", @allow;
 
     return $allow if grep {
-      if    (not ref $_)  { lc $method eq lc $_ }
+      if    (not ref $_)  { uc $method eq uc $_ }
       else  { die "Wrong router config 'cors_methods'" }
     } @allow;
 
@@ -180,6 +180,9 @@ sub register {
           unless defined $origin;
 
         my @opts_methods = @{$opts->{methods} //= []};
+        push @opts_methods, 'HEAD'
+          if grep { uc $_ eq 'GET' } @opts_methods
+            and not grep { uc $_ eq 'HEAD' } @opts_methods;
         return $c->render(status => 204, data => '')
           unless @opts_methods;
 
