@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base 'Mojolicious::Plugin';
 
 ## no critic
-our $VERSION = '1.05_008';
+our $VERSION = '1.05_010';
 $VERSION = eval $VERSION;
 ## use critic
 
@@ -29,7 +29,7 @@ sub register {
     return $origin if grep {
       if    (not ref $_)          { lc $origin eq lc $_ }
       elsif (ref $_ eq 'Regexp')  { $origin =~ $_ }
-      else  { die "Wrong router config 'cors_origin'" }
+      else  { die "Wrong router config 'cors.origin'" }
     } @allow;
 
     $c->app->log->debug("Reject CORS Origin '$origin'");
@@ -47,7 +47,7 @@ sub register {
 
     return $allow if grep {
       if    (not ref $_)  { uc $method eq uc $_ }
-      else  { die "Wrong router config 'cors_methods'" }
+      else  { die "Wrong router config 'cors.methods'" }
     } @allow;
 
     $c->app->log->debug("Reject CORS Method '$method'");
@@ -77,7 +77,7 @@ sub register {
 
     return $allow unless grep {
       if    (not ref $_)  { not $safe_headers{ lc $_ } }
-      else  { die "Wrong router config 'cors_headers'" }
+      else  { die "Wrong router config 'cors.headers'" }
     } @allow;
 
     $c->app->log->debug("Reject CORS Headers '$headers'");
@@ -207,6 +207,8 @@ sub register {
 
         $h->header('Access-Control-Max-Age' => $conf->{max_age});
 
+        $c->app->log->debug("Accept CORS '$origin' => '$methods'");
+
         return $c->render(status => 204, data => '');
       }
     );
@@ -223,9 +225,9 @@ sub _route_opts {
   while ($route) {
     for my $name (@fields) {
       next if exists $opts{$name};
-      next unless exists $route->to->{"cors_$name"};
+      next unless exists $route->to->{"cors.$name"};
 
-      $opts{$name} = $route->to->{"cors_$name"}
+      $opts{$name} = $route->to->{"cors.$name"}
     }
 
     $route = $route->parent;
@@ -262,15 +264,15 @@ Mojolicious::Plugin::StrictCORS - Strict and secure control over CORS
     });
 
     # set app-wide CORS defaults
-    $app->routes->to(cors_credentials => 1);
+    $app->routes->to('cors.credentials' => 1);
 
     # set default CORS options for nested routes
-    $r = $r->under(..., { cors_origin => ['*'] }, ...);
+    $r = $r->under(..., { 'cors.origin' => ['*'] }, ...);
 
     # set CORS options for this route (at least "origin" option must be
     # defined to allow CORS, either here or in parent routes)
-    $r->get(..., { cors_origin => ['*'] }, ...);
-    $r->route(...)->to(cors_origin => ['*']);
+    $r->get(..., { 'cors.origin' => ['*'] }, ...);
+    $r->route(...)->to('cors.origin' => ['*']);
 
     # allow non-simple (with preflight) CORS on this route
     $r->cors(...);
@@ -291,12 +293,12 @@ But this module no longer updated, so this one wos created.
 
 =head2 SECURITY
 
-Don't use the lazy C<< cors_origin => ['*'] >> for resources which should be
+Don't use the lazy C<< 'cors.origin' => ['*'] >> for resources which should be
 available only for intranet or which behave differently when accessed from
 intranet - otherwise malicious website opened in browser running on
 workstation in intranet will get access to these resources.
 
-Don't use the lazy C<< cors_origin => ['*'] >> for resources which should be
+Don't use the lazy C<< 'cors.origin' => ['*'] >> for resources which should be
 available only from some known websites - otherwise other malicious website
 will be able to attack your site by injecting JavaScript into the victim's
 browser.
@@ -318,15 +320,15 @@ predefined defaults for their nested routes.
 
 =over
 
-=item C<< cors_origin => ['*'] >>
+=item C<< 'cors.origin' => ['*'] >>
 
-=item C<< cors_origin => ["http://example.com"] >>
+=item C<< 'cors.origin' => ["http://example.com"] >>
 
-=item C<< cors_origin => ["https://example.com", "http://example.com:8080"] >>
+=item C<< 'cors.origin' => ["https://example.com", "http://example.com:8080"] >>
 
-=item C<< cors_origin => [qr/\.local\z/ms] >>
+=item C<< 'cors.origin' => [qr/\.local\z/ms] >>
 
-=item C<< cors_origin => undef >> (default)
+=item C<< 'cors.origin' => undef >> (default)
 
 This option is required to enable CORS support for the route.
 
@@ -337,9 +339,9 @@ When set to undef no origins will match, so it effectively disable
 CORS support (may be useful if you've set this option value on parent
 route).
 
-=item C<< cors_credentials => 1 >>
+=item C<< 'cors.credentials' => 1 >>
 
-=item C<< cors_credentials => undef >> (default)
+=item C<< 'cors.credentials' => undef >> (default)
 
 While handling preflight request true/false value will tell browser to
 send or not send credentials (cookies, http auth, SSL certificate) with
@@ -348,11 +350,11 @@ actual request.
 While handling simple/actual request if set to false and browser has sent
 credentials will disallow to process returned response.
 
-=item C<< cors_expose => ['X-Some'] >>
+=item C<< 'cors.expose' => ['X-Some'] >>
 
-=item C<< cors_expose => [qw/X-Some X-Other Server/] >>
+=item C<< 'cors.expose' => [qw/X-Some X-Other Server/] >>
 
-=item C<< cors_expose => undef >> (default)
+=item C<< 'cors.expose' => undef >> (default)
 
 Allow access to these headers while processing returned response.
 
@@ -365,18 +367,18 @@ These headers doesn't need to be included in this option:
   Last-Modified
   Pragma
 
-=item C<< cors_headers => ['X-Requested-With'] >>
+=item C<< 'cors.headers' => ['X-Requested-With'] >>
 
-=item C<< cors_headers => [qw/X-Requested-With Content-Type X-Some/] >>
+=item C<< 'cors.headers' => [qw/X-Requested-With Content-Type X-Some/] >>
 
-=item C<< cors_headers => undef >> (default)
+=item C<< 'cors.headers' => undef >> (default)
 
 Define headers which browser is allowed to send. Work only for non-simple
 CORS because it require preflight.
 
-=item C<< cors_methods => ['POST'] >>
+=item C<< 'cors.methods' => ['POST'] >>
 
-=item C<< cors_methods => [qw/GET POST PUT DELETE] >>
+=item C<< 'cors.methods' => [qw/GET POST PUT DELETE] >>
 
 This option can be used only for C<cors()> route. It's needed in complex
 cases when it's impossible to automatically detect CORS option while
@@ -399,8 +401,8 @@ them automatically by searching for route defined for same path and HTTP
 method given in CORS request. Example:
 
     $r->cors("/rpc");
-    $r->get("/rpc", { cors_origin => ["http://example.com"] });
-    $r->put("/rpc", { cors_origin => [qr/\.local\z/ms] });
+    $r->get("/rpc", { 'cors.origin' => ["http://example.com"] });
+    $r->put("/rpc", { 'cors.origin' => [qr/\.local\z/ms] });
 
 But in some cases target route can't be detected, for example if you've
 defined several routes for same path using different conditions which
@@ -414,18 +416,19 @@ CORS options you should use combined in less restrictive way options for
 preflight route. Example:
 
     $r->cors("/rpc")->to(
-        cors_methods      => [qw/GET POST/],
-        cors_origin       => ["http://localhost", "http://example.com"],
-        cors_credentials  => 1,
+        'cors.methods'      => [qw/GET POST/],
+        'cors.origin'       => ["http://localhost", "http://example.com"],
+        'cors.credentials'  => 1,
     );
     $r->any([qw(GET POST)] => "/rpc")->over(
       headers => {
         'Content-Type' => 'application/json-rpc'
       }
     )->to(
-      controller  => 'jsonrpc',
-      action      => 'handler',
-      cors_origin => ["http://localhost"]
+      controller    => 'jsonrpc',
+      action        => 'handler',
+
+      'cors.origin' => ["http://localhost"]
     );
     $r->post("/rpc")->over(
       headers => {
@@ -434,8 +437,9 @@ preflight route. Example:
     )->to(
       controller  => 'soaprpc',
       action      => 'handler',
-      cors_origin => "http://example.com",
-      cors_credentials  => 1
+
+      'cors.origin'       => "http://example.com",
+      'cors.credentials'  => 1
     );
 
 This route use 'headers' condition, so you can add your own handler for
@@ -514,7 +518,7 @@ Dmitry Krutikov E<lt>monstar@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2019 Dmitry Krutikov.
+Copyright 2020 Dmitry Krutikov.
 
 You may distribute under the terms of either the GNU General Public
 License or the Artistic License, as specified in the README file.
