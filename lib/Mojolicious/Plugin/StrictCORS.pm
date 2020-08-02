@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base 'Mojolicious::Plugin';
 
 ## no critic
-our $VERSION = "1.06_001";
+our $VERSION = "1.06_002";
 $VERSION = eval $VERSION;
 ## use critic
 
@@ -238,10 +238,6 @@ __END__
 
 Mojolicious::Plugin::StrictCORS - Strict and secure control over CORS
 
-=head1 VERSION
-
-1.05
-
 =head1 SYNOPSIS
 
   # Mojolicious app
@@ -256,15 +252,15 @@ Mojolicious::Plugin::StrictCORS - Strict and secure control over CORS
     });
 
     # set app-wide CORS defaults
-    $app->routes->to('cors_credentials' => 1);
+    $app->routes->to(cors_credentials => 1);
 
     # set default CORS options for nested routes
-    $r = $r->under(..., { 'cors_origin' => ['*'] }, ...);
+    $r = $r->under(..., { cors_origin => ['*'] }, ...);
 
     # set CORS options for this route (at least "origin" option must be
     # defined to allow CORS, either here or in parent routes)
-    $r->get(..., { 'cors_origin' => ['*'] }, ...);
-    $r->route(...)->to('cors_origin' => ['*']);
+    $r->get(..., { cors_origin => ['*'] }, ...);
+    $r->route(...)->to(cors_origin => ['*']);
 
     # allow non-simple (with preflight) CORS on this route
     $r->cors(...);
@@ -280,17 +276,17 @@ Cross Origin Resource Sharing for routes in L<Mojolicious> app.
 Implements this spec: L<http://www.w3.org/TR/2014/REC-cors-20140116/>.
 
 This module is based on Powerman's CORS implementation:
-https://github.com/powerman/perl-Mojolicious-Plugin-SecureCORS
+L<https://github.com/powerman/perl-Mojolicious-Plugin-SecureCORS>
 But this module no longer updated, so this one wos created.
 
 =head2 SECURITY
 
-Don't use the lazy C<< 'cors_origin' => ['*'] >> for resources which should be
+Don't use the lazy cors_origin => ['*'] for resources which should be
 available only for intranet or which behave differently when accessed from
 intranet - otherwise malicious website opened in browser running on
 workstation in intranet will get access to these resources.
 
-Don't use the lazy C<< 'cors_origin' => ['*'] >> for resources which should be
+Don't use the lazy cors_origin => ['*'] for resources which should be
 available only from some known websites - otherwise other malicious website
 will be able to attack your site by injecting JavaScript into the victim's
 browser.
@@ -312,15 +308,15 @@ predefined defaults for their nested routes.
 
 =over
 
-=item C<< 'cors_origin' => ['*'] >>
+=item cors_origin => ['*']
 
-=item C<< 'cors_origin' => ["http://example.com"] >>
+=item cors_origin => ["http://example.com"]
 
-=item C<< 'cors_origin' => ["https://example.com", "http://example.com:8080"] >>
+=item cors_origin => ["https://example.com", "http://example.com:8080"]
 
-=item C<< 'cors_origin' => [qr/\.local\z/ms] >>
+=item cors_origin => [qr/\.local\z/ms]
 
-=item C<< 'cors_origin' => undef >> (default)
+=item cors_origin => undef >> (default)
 
 This option is required to enable CORS support for the route.
 
@@ -331,9 +327,9 @@ When set to undef no origins will match, so it effectively disable
 CORS support (may be useful if you've set this option value on parent
 route).
 
-=item C<< 'cors_credentials' => 1 >>
+=item cors_credentials => 1
 
-=item C<< 'cors_credentials' => undef >> (default)
+=item cors_credentials => undef (default)
 
 While handling preflight request true/false value will tell browser to
 send or not send credentials (cookies, http auth, SSL certificate) with
@@ -342,11 +338,11 @@ actual request.
 While handling simple/actual request if set to false and browser has sent
 credentials will disallow to process returned response.
 
-=item C<< 'cors_expose' => ['X-Some'] >>
+=item cors_expose => ['X-Some']
 
-=item C<< 'cors_expose' => [qw/X-Some X-Other Server/] >>
+=item cors_expose => [qw/X-Some X-Other Server/]
 
-=item C<< 'cors_expose' => undef >> (default)
+=item cors_expose => undef (default)
 
 Allow access to these headers while processing returned response.
 
@@ -359,18 +355,18 @@ These headers doesn't need to be included in this option:
   Last-Modified
   Pragma
 
-=item C<< 'cors_headers' => ['X-Requested-With'] >>
+=item cors_headers => ['X-Requested-With']
 
-=item C<< 'cors_headers' => [qw/X-Requested-With Content-Type X-Some/] >>
+=item cors_headers => [qw/X-Requested-With Content-Type X-Some/]
 
-=item C<< 'cors_headers' => undef >> (default)
+=item cors_headers => undef (default)
 
 Define headers which browser is allowed to send. Work only for non-simple
 CORS because it require preflight.
 
-=item C<< 'cors_methods' => ['POST'] >>
+=item cors_methods => ['POST']
 
-=item C<< 'cors_methods' => [qw/GET POST PUT DELETE] >>
+=item cors_methods => [qw/GET POST PUT DELETE]
 
 This option can be used only for C<cors()> route. It's needed in complex
 cases when it's impossible to automatically detect CORS option while
@@ -393,8 +389,8 @@ them automatically by searching for route defined for same path and HTTP
 method given in CORS request. Example:
 
     $r->cors("/rpc");
-    $r->get("/rpc", { 'cors_origin' => ["http://example.com"] });
-    $r->put("/rpc", { 'cors_origin' => [qr/\.local\z/ms] });
+    $r->get("/rpc", { cors_origin => ["http://example.com"] });
+    $r->put("/rpc", { cors_origin => [qr/\.local\z/ms] });
 
 But in some cases target route can't be detected, for example if you've
 defined several routes for same path using different conditions which
@@ -408,9 +404,9 @@ CORS options you should use combined in less restrictive way options for
 preflight route. Example:
 
     $r->cors("/rpc")->to(
-        'cors_methods'      => [qw/GET POST/],
-        'cors_origin'       => ["http://localhost", "http://example.com"],
-        'cors_credentials'  => 1,
+        cors_methods      => [qw/GET POST/],
+        cors_origin       => ["http://localhost", "http://example.com"],
+        cors_credentials  => 1,
     );
     $r->any([qw(GET POST)] => "/rpc")->over(
       headers => {
@@ -420,7 +416,7 @@ preflight route. Example:
       controller    => 'jsonrpc',
       action        => 'handler',
 
-      'cors_origin' => ["http://localhost"]
+      cors_origin   => ["http://localhost"]
     );
     $r->post("/rpc")->over(
       headers => {
@@ -430,8 +426,8 @@ preflight route. Example:
       controller  => 'soaprpc',
       action      => 'handler',
 
-      'cors_origin'       => "http://example.com",
-      'cors_credentials'  => 1
+      cors_origin       => "http://example.com",
+      cors_credentials  => 1
     );
 
 This route use 'headers' condition, so you can add your own handler for
@@ -445,7 +441,7 @@ requests on same path.
 Accept same params as L<Mojolicious::Routes::Route/"under">.
 
 Under returned route CORS requests to any route which isn't configured
-for CORS (i.e. won't have C<'cors_origin'> in route's default parameters)
+for CORS (i.e. won't have C<cors_origin> in route's default parameters)
 will be rendered as "403 Forbidden".
 
 This feature should make it harder to attack your site by injecting
