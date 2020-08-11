@@ -1,10 +1,8 @@
 package Mojolicious::Plugin::StrictCORS;
 use Mojo::Base 'Mojolicious::Plugin';
 
-## no critic
-our $VERSION = "1.06_002";
+our $VERSION = "0.01";
 $VERSION = eval $VERSION;
-## use critic
 
 use constant DEFAULT_MAX_AGE => 3600;
 
