@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 
+use 5.010;
 use strict;
 use warnings;
 
@@ -17,6 +18,7 @@ WriteMakefile1(
   TEST_REQUIRES => {
     'Test::More' => 0,
   },
+  MIN_PERL_VERSION => 5.010,
   META_MERGE => {
     'meta-spec' => { version => 2 },
     resources => {
